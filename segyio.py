@@ -5,7 +5,7 @@ These functions are essentially interfaces to the segy class in Obspy.
 
 :copyright: 2016 Geophysics Labs
 :author: Joseph Barraud
-:license: Apache 2.0?
+:license: BSD License
 """
 
 import numpy as np
@@ -99,5 +99,42 @@ def loadSEGY(filename,endian=None):
     
     return data,SH,STH
 
+#===============================================================================
+# loadSHandSTH
+#===============================================================================
+def loadSHandSTH(filename,endian=None):
+    """
+    Read and load only headers from SEGY file. No data is loaded, saving time and memory.
+    
+    Usage:
+    SH,STH = loadSHandSTH(filename)
+    """
+    # read file with obspy
+    seis = _read_segy(filename,endian=endian,headonly=True)
+    traces = seis.traces    
+    ntraces = len(traces)
+    
+    # Load SEGY header
+    SH = loadSEGYHeader(seis)
+    SH['filename'] = filename
+    SH["ntraces"] = ntraces
+    # for compatibility with older segy module
+    SH["ns"] = SH['number_of_samples_per_data_trace']
+    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000 # in milliseconds
+    
+    # Load all the Trace headers in arrays
+    STH = loadSEGYTraceHeader(traces)
+    
+    return SH,STH
 
+#===============================================================================
+# writeSTH
+#===============================================================================
+def writeSTH(fileid,SH,STH_Key,newSTH,endian='>'):
+    """
+    writeSTH(fileid,SH,STH_Key,newSTH,endian='>')
 
+    Write new trace header in SEGY file
+
+    Joseph Barraud, 2011
+    """
