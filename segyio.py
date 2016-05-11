@@ -10,8 +10,9 @@ These functions are essentially interfaces to the segy class in Obspy.
 
 import numpy as np
 #import obspy.io.segy.segy as seg
-from obspy.io.segy.segy import _read_segy,TRACE_HEADER_KEYS,BINARY_FILE_HEADER_FORMAT
+from obspy.io.segy.segy import _read_segy,BINARY_FILE_HEADER_FORMAT
 
+# most useful trace header keys
 STH_keys=[u'trace_sequence_number_within_line',
           u'trace_sequence_number_within_segy_file',
           u'scalar_to_be_applied_to_all_coordinates',
@@ -35,7 +36,7 @@ STH_keys=[u'trace_sequence_number_within_line',
 #===============================================================================  
 def loadSEGYHeader(segy,keys=None):
     '''
-    Load SEGY file headers in a list
+    Load SEGY file headers from a list
     '''
     # read binary header
     SHbin = segy.binary_file_header
@@ -74,7 +75,8 @@ def loadSEGY(filename,endian=None):
     """
     Read and load data and headers from SEGY file.
     
-    Usage:
+    Usage
+    -----
     data,SH,STH = loadSEGY(filename)
     """
     
@@ -106,10 +108,11 @@ def loadSHandSTH(filename,endian=None):
     """
     Read and load only headers from SEGY file. No data is loaded, saving time and memory.
     
-    Usage:
+    Usage
+    -----
     SH,STH = loadSHandSTH(filename)
     """
-    # read file with obspy
+    # read file with obspy (headers only)
     seis = _read_segy(filename,endian=endian,headonly=True)
     traces = seis.traces    
     ntraces = len(traces)
@@ -130,11 +133,17 @@ def loadSHandSTH(filename,endian=None):
 #===============================================================================
 # writeSTH
 #===============================================================================
-def writeSTH(fileid,SH,STH_Key,newSTH,endian='>'):
+def writeSTH(seis,STH_Key,newSTH):
     """
     writeSTH(fileid,SH,STH_Key,newSTH,endian='>')
 
-    Write new trace header in SEGY file
-
-    Joseph Barraud, 2011
+    Write new trace header in a SEGY file
     """
+    traces = seis.traces
+    for i,trace in enumerate(traces):
+        trace.header.__setattr__(STH_Key,newSTH[i])
+        
+    
+    
+    
+    
