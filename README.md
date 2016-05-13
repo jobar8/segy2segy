@@ -41,14 +41,20 @@ There is no installation required, just use `git` or download the ZIP file and u
 ##Running
 Open the command line and enter the directory where the segy2segy files have been downloaded.
 
-You can either process of single SEGY file, or a bunch of them in a directory. Example for a single file:
+You can either process of single SEGY file, or a bunch of them in a directory. 
+
+Example for a single file:
 
     python segy2segy.py <\path\to\infile.segy> -o \path\to\output.segy -s_srs 23030 -t_srs 23029
+    
+Example for a directory:
+
+    python segy2segy.py <\path\to\folder> -s_srs 23030 -t_srs 23029 -s_coord CDP -t_coord Source -s _UTM29
 
 ###Parameters
 **inSEGY** : Input SEGY file or directory containing SEGY files.
   
-**-o** ***outSEGY*** : Output SEGY file. If omitted, the input file will be overwritten, unless a suffix is defined (see option -s).
+**-o** ***outSEGY*** : Output SEGY file. If omitted, a suffix must be defined (see option -s). Files can't be overwritten.
   
 **-s_srs** ***srs def*** : Spatial reference system of the input (source) file. Must be defined as
   a EPSG code, i.e. 23029 for ED50 / UTM Zone 29N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
@@ -60,11 +66,11 @@ You can either process of single SEGY file, or a bunch of them in a directory. E
   
 **-t_coord** ***string*** : Position of the coordinates in the output SEGY file. This corresponds to a trace header. *Can be either 'Source', 'Group', or 'CDP'*. Default is CDP.
 
-**-fs** ***Boolean*** : Force Scaling (optional). If True, the program will use the number defined by the scaler argument to calculate the coordinates. Default is False and so the program will read the coordinate scaler from the SEGY file. It will use the same value for writing coordinates to the new SEGY file.
+**-fs** ***boolean*** : Force Scaling (optional). If True, the program will use the number defined by the scaler argument to calculate the coordinates. Default is False and so the program will read the coordinate scaler from the SEGY file. It will use the same value for writing coordinates to the new SEGY file.
 
 **-sc** ***scaler*** : Used in combination with Force Scaling (optional). The scaler is defined like for a SEGY file, for example -100 for dividing by 100 when reading.
 
-**-s** ***string*** : String to add at the end of the input file as a suffix to create the output file name.
+**-s** ***string*** : String to add at the end of the input file name as a suffix to create the output file name.
 
 
 
