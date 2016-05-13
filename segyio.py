@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Functions to read and write SEGY files with the Obspy module.
-These functions are essentially interfaces to the segy class in Obspy.
+Functions to read and write SEGY files with the help of the ObsPy library.
+These functions are essentially interfaces to the obspy.io.segy.segy sub-module.
 
 :copyright: 2016 Geophysics Labs
 :author: Joseph Barraud
-:license: Apache 2.0?
+:license: BSD License
 """
-
 import numpy as np
-#import obspy.io.segy.segy as seg
-from obspy.io.segy.segy import _read_segy,TRACE_HEADER_KEYS,BINARY_FILE_HEADER_FORMAT
+from obspy.io.segy.segy import _read_segy,BINARY_FILE_HEADER_FORMAT
 
+# most useful trace header keys
 STH_keys=[u'trace_sequence_number_within_line',
           u'trace_sequence_number_within_segy_file',
           u'scalar_to_be_applied_to_all_coordinates',
@@ -30,15 +29,32 @@ STH_keys=[u'trace_sequence_number_within_line',
           u'for_3d_poststack_data_this_field_is_for_in_line_number',
           u'for_3d_poststack_data_this_field_is_for_cross_line_number']
 
-#===============================================================================
+#==============================================================================
 # loadSEGYHeader
-#===============================================================================  
-def loadSEGYHeader(segy,keys=None):
+#==============================================================================
+def loadSEGYHeader(seis,keys=None):
     '''
-    Load SEGY file headers in a list
+    Load headers from an ObsPy SEGYFile object. 
+    
+    The headers are read from the so-called `binary header`. The function returns
+    a default selection of useful headers or pick from an optional list (keys).
+    
+    Parameters
+    ----------
+    seis : ObsPy SEGYFile object
+        This is created using the _read_segy function in obspy.io.segy.segy
+    keys : list of strings
+        List of headers to load. Must correspond to attributes as defined in ObsPy.
+        See BINARY_FILE_HEADER_FORMAT dictionary.
+
+    Returns
+    -------
+    SH : dictionary
+        A dictionary with the values associated with the selected headers.
+    
     '''
     # read binary header
-    SHbin = segy.binary_file_header
+    SHbin = seis.binary_file_header
     
     # load selection of most useful headers if none requested already
     if not keys:
@@ -54,9 +70,28 @@ def loadSEGYHeader(segy,keys=None):
 # loadSEGYTraceHeader
 #===============================================================================
 def loadSEGYTraceHeader(traces,keys=None):
-    """
-    Load trace headers into Numpy arrays 
-    """
+    '''
+    Load trace headers from an ObsPy SEGYTrace object. 
+    
+    The function returns a default selection of useful headers or pick from 
+    an optional list (keys).
+    
+    Parameters
+    ----------
+    traces : ObsPy SEGYTrace object
+        This is created from a SEGYFile object.
+    keys : list of strings
+        List of trace headers to load. Must correspond to attributes as defined
+        in ObsPy. See obspy.io.segy.header.TRACE_HEADER_FORMAT for a list of all
+        available trace header attributes or the segyio.STH_keys for a shorter list.
+
+    Returns
+    -------
+    STH : dictionary
+        A dictionary with the values associated with the selected headers. The values
+        are provided as Numpy arrays (vectors with ntraces elements).
+    
+    '''
     # load selection of most useful headers if none requested already
     if not keys:
         keys = STH_keys
@@ -72,9 +107,10 @@ def loadSEGYTraceHeader(traces,keys=None):
 #===============================================================================
 def loadSEGY(filename,endian=None):
     """
-    Read and load data and headers from SEGY file.
+    Read and load data and headers from a SEGY file.
     
-    Usage:
+    Usage
+    -----
     data,SH,STH = loadSEGY(filename)
     """
     
@@ -85,9 +121,10 @@ def loadSEGY(filename,endian=None):
     
     # Load SEGY header
     SH = loadSEGYHeader(seis)
+    
+    # additional headers for compatibility with older segy module
     SH['filename'] = filename
     SH["ntraces"] = ntraces
-    # for compatibility with older segy module
     SH["ns"] = SH['number_of_samples_per_data_trace']
     SH["dt"] = SH['sample_interval_in_microseconds'] / 1000 # in milliseconds
     
@@ -99,5 +136,49 @@ def loadSEGY(filename,endian=None):
     
     return data,SH,STH
 
+#===============================================================================
+# loadSHandSTH
+#===============================================================================
+def loadSHandSTH(filename,endian=None):
+    """
+    Read and load headers from SEGY file. No data is loaded, saving time and memory.
+    
+    Usage
+    -----
+    SH,STH = loadSHandSTH(filename)
+    """
+    # read file with obspy (headers only)
+    seis = _read_segy(filename,endian=endian,headonly=True)
+    traces = seis.traces    
+    ntraces = len(traces)
+    
+    # Load SEGY header
+    SH = loadSEGYHeader(seis)
+    
+    # additional headers for compatibility with older segy module
+    SH['filename'] = filename
+    SH["ntraces"] = ntraces
+    SH["ns"] = SH['number_of_samples_per_data_trace']
+    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000 # in milliseconds
+    
+    # Load all the Trace headers in arrays
+    STH = loadSEGYTraceHeader(traces)
+    
+    return SH,STH
 
-
+#===============================================================================
+# writeSTH
+#===============================================================================
+def writeSTH(seis,STH_Key,newSTH):
+    """
+    Write new trace header to a SEGY file, replacing the existing one.
+    ***Not tested***
+    """
+    traces = seis.traces
+    for i,trace in enumerate(traces):
+        trace.header.__setattr__(STH_Key,newSTH[i])
+        
+    
+    
+    
+    
