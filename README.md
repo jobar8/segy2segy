@@ -46,27 +46,25 @@ You can either process of single SEGY file, or a bunch of them in a directory. E
     python segy2segy.py <\path\to\infile.segy> -o \path\to\output.segy -s_srs 23030 -t_srs 23029
 
 ###Parameters
-  **inSEGY** : Input SEGY file or directory containing SEGY files.
-    
-  **-o** ***outSEGY*** : Output SEGY file.
-    
-  **-s_srs** ***srs def*** : Spatial reference system of the input (source) file. Must be defined as
-    a EPSG code, i.e. 23029 for ED50 / UTM Zone 29N.
-    
-  **-t_srs** ***srs def*** : Spatial reference system of the output (target) file. Must be defined
-    as a EPSG code, i.e. 23030 for ED50 / UTM Zone 30N.
-    
-  **-s_coord** ***string*** : Position of the coordinates in the input SEGY file. The field corresponds 
-    to a byte position in the binary file. *Can be either 'Source', 'Group', or 'CDP'*.
-    
-  **-t_coord** ***string*** : Position of the coordinates in the output SEGY file. The field corresponds
-    to a byte position in the binary file. *Can be either 'Source', 'Group', or 'CDP'*.
-    
-  **-fs** ***Boolean*** : Force Scaling. If True, the program will use the number defined by the scaler argument to calculate the coordinates. Default is False and so the program will read the coordinate scaler from the SEGY file. It will use the same value for writing coordinates in the new SEGY file.
-    
-  **-sc** ***scaler*** : Used in combination with force_scaling. The scaler is defined like for a SEGY file, for example -100 for dividing by 100 when reading.
+**inSEGY** : Input SEGY file or directory containing SEGY files.
   
-  **-s** ***string*** : String to add at the end of the input file as a suffix to create the output file name.
+**-o** ***outSEGY*** : Output SEGY file. If omitted, the input file will be overwritten, unless a suffix is defined (see option -s).
+  
+**-s_srs** ***srs def*** : Spatial reference system of the input (source) file. Must be defined as
+  a EPSG code, i.e. 23029 for ED50 / UTM Zone 29N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
+  
+**-t_srs** ***srs def*** : Spatial reference system of the output (target) file. Must be defined
+  as a EPSG code, i.e. 23030 for ED50 / UTM Zone 30N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
+  
+**-s_coord** ***string*** : Position of the coordinates in the input SEGY file. This corresponds to a trace header. *Can be either 'Source', 'Group', or 'CDP'*. Default is Source.
+  
+**-t_coord** ***string*** : Position of the coordinates in the output SEGY file. This corresponds to a trace header. *Can be either 'Source', 'Group', or 'CDP'*. Default is CDP.
+
+**-fs** ***Boolean*** : Force Scaling (optional). If True, the program will use the number defined by the scaler argument to calculate the coordinates. Default is False and so the program will read the coordinate scaler from the SEGY file. It will use the same value for writing coordinates to the new SEGY file.
+
+**-sc** ***scaler*** : Used in combination with Force Scaling (optional). The scaler is defined like for a SEGY file, for example -100 for dividing by 100 when reading.
+
+**-s** ***string*** : String to add at the end of the input file as a suffix to create the output file name.
 
 
 
