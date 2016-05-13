@@ -17,9 +17,9 @@ from obspy.io.segy.segy import _read_segy
 import segyio,spatial
 
 # coordinate positions in SEGY (lookup dictionary)
-coordKeys = {'Source':['source_coordinate_x','source_coordinate_y'],
-             'Group':['group_coordinate_x','group_coordinate_y'],
-             'CDP':['x_coordinate_of_ensemble_position_of_this_trace',
+coordKeys = {'source':['source_coordinate_x','source_coordinate_y'],
+             'group':['group_coordinate_x','group_coordinate_y'],
+             'cdp':['x_coordinate_of_ensemble_position_of_this_trace',
                     'y_coordinate_of_ensemble_position_of_this_trace']  }
 
 #==============================================================================
@@ -69,7 +69,7 @@ def segyXY(inSEGY,coord='Source',force_scaling=False,scaler=1.):
     return a (ntraces,2) Numpy array.
     '''
     # retrieve keywords for coordinate headers
-    Xcoord,Ycoord = coordKeys[coord]
+    Xcoord,Ycoord = coordKeys[coord.lower()]
         
     # open file and read it with obspy module (does not read the data)
     SH,STH = segyio.loadSHandSTH(inSEGY)
@@ -132,27 +132,20 @@ def segy2segy(inSEGY,outSEGY,s_srs=23029,t_srs=23030,s_coord='Source',t_coord='C
     
     # transform coordinates
     newXYarray = spatial.projectPoints(XYarray,s_srs,t_srs)
+    # Apply scaling
+    newXYarray = newXYarray/np.column_stack((XYscale,XYscale))
     
     # load SEGY object (headers only)
     seis = _read_segy(inSEGY,headonly=True)
     traces = seis.traces
     
     # get key for coordinates position in output file
-    Xcoord,Ycoord = coordKeys[t_coord]
-    
-#    # read coordinate scaler and set new one for writing (assumes scaler is identical for all traces)
-#    XYscale = traces[0].header.scalar_to_be_applied_to_all_coordinates
-#    if XYscale == 0: # some SEGY files lack a proper definition of the scaler
-#        scaler = 1.
-#    elif XYscale < 0: # Positive scaler is multiplier, if negative is divisor
-#        scaler = abs(XYscale)
-#    else:
-#        scaler = 1./abs(XYscale)
+    Xcoord,Ycoord = coordKeys[t_coord.lower()]
     
     # insert new coordinates in SEGY object
     for i,trace in enumerate(traces):
-        trace.header.__setattr__(Xcoord,int(newXYarray[i,0]/XYscale))
-        trace.header.__setattr__(Ycoord,int(newXYarray[i,1]/XYscale))
+        trace.header.__setattr__(Xcoord,np.round(newXYarray[i,0]))
+        trace.header.__setattr__(Ycoord,np.round(newXYarray[i,1]))
         
     # write output SEGY with new coordinates
     seis.write(outSEGY)
@@ -208,10 +201,9 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--suffix',
                         metavar='Suffix to output filename',
                         type=str,
-                        nargs='?',
                         default='',
-                        help='Suffix to add to the input filename to create the output filename. \
-                        Only works if input is a directory.')
+                        nargs='?',
+                        help='Suffix to add to the input filename to create the output filename.')
               
     args = parser.parse_args()
     infile = args.input_file
@@ -219,24 +211,36 @@ if __name__ == "__main__":
     # Process file or list of files
     if os.path.isfile(infile):
         print("Processing file: {}".format(os.path.basename(infile)))
-        segy2segy(infile,args.output,args.s_srs,args.t_srs,
-                  args.s_coord,args.t_coord,args.force_scaling,args.scaler)
-        print("\nSEGY coordinates successfully projected.")
+        if args.output:
+            segy2segy(infile,args.output,args.s_srs,args.t_srs,
+                      args.s_coord,args.t_coord,args.force_scaling,args.scaler)
+            print("SEGY coordinates successfully projected.")
+        elif args.suffix != '':
+            segyName,extension = os.path.splitext(infile)
+            outfile = segyName + args.suffix + extension
+            segy2segy(infile,outfile,args.s_srs,args.t_srs,
+                      args.s_coord,args.t_coord,args.force_scaling,args.scaler)
+            print("SEGY coordinates successfully projected.")
+        else:
+            print("Error: output file name or suffix not provided.") # file cannot be overwritten
         
     elif os.path.isdir(infile):
-        print("Reading SEGY files in {}".format(infile))
-        for f in os.listdir(infile):
-            if re.search("\\.se?gy$",f,flags=re.IGNORECASE):
-                print("Processing file: {}".format(f))
-                target = os.path.join(infile,f)
-                segyName,extension = os.path.splitext(f)
-                outfile = os.path.join(infile, segyName + args.suffix + '.sgy')
-                segy2segy(target,outfile,args.s_srs,args.t_srs,
-                          args.s_coord,args.t_coord,args.force_scaling,args.scaler)
-        print("\nSEGY files successfully processed.")
-        
+        if args.suffix != '':
+            print("Reading SEGY files in {}".format(infile))
+            for f in os.listdir(infile):
+                if re.search("\\.se?gy$",f,flags=re.IGNORECASE):
+                    print("Processing file: {}".format(f)),
+                    target = os.path.join(infile,f)
+                    segyName,extension = os.path.splitext(f)
+                    outfile = os.path.join(infile, segyName + args.suffix + extension)
+                    segy2segy(target,outfile,args.s_srs,args.t_srs,
+                              args.s_coord,args.t_coord,args.force_scaling,args.scaler)
+                    print("Done!")
+            print("\nAll SEGY files successfully processed.")
+        else:
+            print("Error: Please provide a suffix for output files (option -s).") # files cannot be overwritten
     else:
-        print("Error: Not a file or directory.")
+        print("Error: input is not a file or directory.")
 
     
     
