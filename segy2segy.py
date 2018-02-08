@@ -144,8 +144,8 @@ def segy2segy(inSEGY,outSEGY,s_srs=23029,t_srs=23030,s_coord='Source',t_coord='C
     
     # insert new coordinates in SEGY object
     for i,trace in enumerate(traces):
-        trace.header.__setattr__(Xcoord,np.round(newXYarray[i,0]))
-        trace.header.__setattr__(Ycoord,np.round(newXYarray[i,1]))
+        trace.header.__setattr__(Xcoord,np.int(newXYarray[i,0]))
+        trace.header.__setattr__(Ycoord,np.int(newXYarray[i,1]))
         
     # write output SEGY with new coordinates
     seis.write(outSEGY)
