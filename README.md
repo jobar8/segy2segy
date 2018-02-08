@@ -6,7 +6,7 @@ For this initial release, this tool has only one function: it allows you to tran
 
 ## Requirements
 
-segy2segy needs the following libraries:
+`segy2segy` needs the following libraries:
 
 - The ability to read and write SEG-Y files is provided by [Obspy](http://docs.obspy.org).
 - The transformations of coordinates and the projection calculations are handled by [GDAL](http://www.gdal.org/).
@@ -54,6 +54,8 @@ Example for a single file:
 
     python segy2segy.py <\path\to\infile.segy> -o \path\to\output.segy -s_srs 23030 -t_srs 23029
 
+Note that, by default, the coordinates are read from the "Source" header (bytes 73 and 77) and are not overwritten. The new coordinates are written in the "CDP" header (bytes 181 and 185). The positions can be changed with the `-s_coord` and `t_coord` arguments.
+
 Example for a directory:
 
     python segy2segy.py <\path\to\folder> -s_srs 23030 -t_srs 23029 -s_coord CDP -t_coord Source -s _UTM29
@@ -64,11 +66,9 @@ Example for a directory:
 
 **-o** ***outSEGY*** : Output SEGY file. If omitted, a suffix must be defined (see option -s). Files can't be overwritten.
 
-**-s_srs** ***srs def*** : Spatial reference system of the input (source) file. Must be defined as
-  a EPSG code, i.e. 23029 for ED50 / UTM Zone 29N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
+**-s_srs** ***srs def*** : Spatial reference system of the input (source) file. Must be defined as a EPSG code, i.e. 23029 for ED50 / UTM Zone 29N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
 
-**-t_srs** ***srs def*** : Spatial reference system of the output (target) file. Must be defined
-  as a EPSG code, i.e. 23030 for ED50 / UTM Zone 30N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
+**-t_srs** ***srs def*** : Spatial reference system of the output (target) file. Must be defined as a EPSG code, i.e. 23030 for ED50 / UTM Zone 30N. See [epsg.org](http://www.epsg.org) and [epsg.io](http://epsg.io) for a convenient tool to find these codes.
 
 **-s_coord** ***string*** : Position of the coordinates in the input SEGY file. This corresponds to a trace header. *Can be either 'Source', 'Group', or 'CDP'*. Default is Source.
 
