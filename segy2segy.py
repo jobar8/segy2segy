@@ -162,9 +162,9 @@ def segy2segy(inSEGY,
 
 
 #==============================================================================
-# Use module as a script (command line)
+# main function
 #==============================================================================
-if __name__ == "__main__":
+def main():
 
     parser = argparse.ArgumentParser(description='Reproject SEGY coordinates.')
     parser.add_argument(
@@ -258,3 +258,6 @@ if __name__ == "__main__":
             print("Error: Please provide a suffix for output files (option -s).")  # files cannot be overwritten
     else:
         print("Error: input is not a file or directory.")
+
+if __name__ == "__main__":
+    main()
