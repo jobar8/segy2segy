@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-:copyright: 2016 Geophysics Labs
+:copyright: 2019 Geophysics Labs
 :author: Joseph Barraud
 :license: BSD License
 """
@@ -14,7 +13,8 @@ import numpy as np
 from obspy.io.segy.segy import _read_segy
 
 # import local modules
-import segyio, spatial
+from core.segy_io import loadSHandSTH
+from core.spatial import projectPoints
 
 # coordinate positions in SEGY (lookup dictionary)
 coordKeys = {
@@ -75,7 +75,7 @@ def segyXY(inSEGY, coord='Source', force_scaling=False, scaler=1.):
     Xcoord, Ycoord = coordKeys[coord.lower()]
 
     # open file and read it with obspy module (does not read the data)
-    SH, STH = segyio.loadSHandSTH(inSEGY)
+    SH, STH = loadSHandSTH(inSEGY)
     ntraces = SH['ntraces']
 
     # define output
@@ -141,7 +141,7 @@ def segy2segy(inSEGY,
     XYarray, XYscale = segyXY(inSEGY, s_coord, force_scaling, scaler)
 
     # transform coordinates
-    newXYarray = spatial.projectPoints(XYarray, s_srs, t_srs)
+    newXYarray = projectPoints(XYarray, s_srs, t_srs)
     # Apply scaling
     newXYarray = newXYarray / np.column_stack((XYscale, XYscale))
 

@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Functions to read and write SEGY files with the help of the ObsPy library.
 These functions are essentially interfaces to the obspy.io.segy.segy sub-module.
 
-:copyright: 2016 Geophysics Labs
+:copyright: 2019 Geophysics Labs
 :author: Joseph Barraud
 :license: BSD License
 """
