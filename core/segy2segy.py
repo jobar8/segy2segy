@@ -166,60 +166,53 @@ def segy2segy(inSEGY,
 #==============================================================================
 def main():
 
-    parser = argparse.ArgumentParser(description='Reproject SEGY coordinates.')
+    parser = argparse.ArgumentParser(
+        description='Reproject SEGY coordinates.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         'input_file', metavar='Input SEGY file or directory', type=str, help='The path to a SEGY file or a directory.')
     parser.add_argument(
-        '-o', '--output', metavar='Output SEGY file', type=str, nargs='?', help='The path to the output SEGY file.')
+        '-o',
+        '--output',
+        metavar='Output SEGY file',
+        type=str,
+        help="The path to the output SEGY file. Files can't be overwritten.")
     parser.add_argument(
         '-s_srs',
         metavar='source spatial reference set',
         type=int,
-        nargs='?',
         default=23029,
-        help='The spatial reference of the input file.')
+        help='The spatial reference of the input file defined as a EPSG code.')
     parser.add_argument(
         '-t_srs',
         metavar='target spatial reference set',
         type=int,
-        nargs='?',
         default=23030,
-        help='The spatial reference of the output file.')
+        help='The spatial reference of the output file defined as a EPSG code.')
     parser.add_argument(
         '-s_coord',
         metavar='Source coordinate position',
         type=str,
-        nargs='?',
         default='Source',
-        help='Position of the coordinates in the input SEGY headers.')
+        help="Position of coordinates in the input SEGY headers, to choose in ['Source', 'Group', 'CDP'].")
     parser.add_argument(
         '-t_coord',
         metavar='Target coordinate position',
         type=str,
-        nargs='?',
         default='CDP',
-        help='Position of the new coordinates in the output SEGY headers.')
+        help="Position of the new coordinates in the output SEGY headers, to choose in ['Source', 'Group', 'CDP'].")
     parser.add_argument(
         '-fs',
         '--force_scaling',
         action='store_true',
-        help='If used, the program will use the number defined by the scaler \
-                        argument to scale the coordinates.')
+        help='If used, the program will use the number defined by the scaler argument to scale the coordinates.')
     parser.add_argument(
-        '-sc',
-        '--scaler',
-        metavar='scaler',
-        type=float,
-        nargs='?',
-        default=1.0,
-        help='Scaling factor applied to coordinates.')
+        '-sc', '--scaler', metavar='scaler', type=float, default=1.0, help='Scaling factor applied to coordinates.')
     parser.add_argument(
         '-s',
         '--suffix',
         metavar='Suffix to output filename',
         type=str,
         default='',
-        nargs='?',
         help='Suffix to add to the input filename to create the output filename.')
 
     args = parser.parse_args()
@@ -258,6 +251,7 @@ def main():
             print("Error: Please provide a suffix for output files (option -s).")  # files cannot be overwritten
     else:
         print("Error: input is not a file or directory.")
+
 
 if __name__ == "__main__":
     main()
