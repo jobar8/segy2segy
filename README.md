@@ -15,18 +15,16 @@ For this initial release, this tool has only one function: it allows you to tran
 
 ### Dependencies
 
-You need a working installation of Python (tested with version 2.7, but it should work with Python 3.x). I would recommend using [Anaconda](https://www.continuum.io/downloads) to automatise the installation of all the necessary packages.
+You need a working installation of Python (tested with version 2.7 and 3.7). I would recommend using [Anaconda](https://www.continuum.io/downloads) to automatise the installation of all the necessary packages.
 
-Once you have downloaded and installed Anaconda, start with ObsPy by typing on the command line:
+Once you have downloaded and installed Anaconda, create a new environment like so:
 
-    conda install -c obspy obspy
+```bash
+conda config --add channels conda-forge
+conda create -n segy obspy gdal
+```
 
-The `-c` option means that ObsPy is going to be installed from its own channel.
-
-For GDAL, the latest version is available from the [conda-forge](https://conda-forge.github.io/) channel. So you can type:
-
-    conda config --add channels conda-forge
-    conda install gdal
+This creates an environment called `segy` that then needs to be activated with the command `conda activate segy`.
 
 That's it, almost... On Windows at least, the installation of GDAL *may* fail to create the necessary environment variables (you need to check that with `set` on a command line where a conda environment has been activated). If you need to set it manually, follow these steps:
 
@@ -40,25 +38,34 @@ The path to the `GDAL_DATA` directory may vary depending on your installation. L
 
 ### Installation of segy2segy
 
-There is no installation required, just use `git` to clone the repo, or download as a ZIP file and unzip it to your local drive.
+To install segy2segy, simply use `git` to clone the repo, or download as a ZIP file and unzip it to your local drive. Then run the following:
+
+```bash
+cd segy2segy
+python setup.py install
+```
+
+In addition to copying the files into your python environment. This will also make the script `segy2segy.py` executable so it is available anywhere on your system.
 
 ----------
 
 ## Running
 
-Open the command line and enter the directory where the segy2segy files have been downloaded.
-
 You can either process of single SEGY file, or a bunch of them in a directory.
 
 Example for a single file:
 
-    python segy2segy.py <\path\to\infile.segy> -o \path\to\output.segy -s_srs 23030 -t_srs 23029
+```bash
+segy2segy.py \path\to\infile.segy -o \path\to\output.segy -s_srs 23030 -t_srs 23029
+```
 
 Note that, by default, the coordinates are read from the "Source" header (bytes 73 and 77) and are not overwritten. The new coordinates are written in the "CDP" header (bytes 181 and 185). The positions can be changed with the `-s_coord` and `t_coord` arguments.
 
 Example for a directory:
 
-    python segy2segy.py <\path\to\folder> -s_srs 23030 -t_srs 23029 -s_coord CDP -t_coord Source -s _UTM29
+```bash
+segy2segy.py \path\to\folder -s_srs 23030 -t_srs 23029 -s_coord CDP -t_coord Source -s _UTM29
+```
 
 ### Parameters
 
