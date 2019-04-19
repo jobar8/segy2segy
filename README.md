@@ -45,7 +45,7 @@ cd segy2segy
 python setup.py install
 ```
 
-In addition to copying the files into your python environment. This will also make the script `segy2segy.py` executable so it is available anywhere on your system.
+In addition to copying the files into your python environment, this will also make the script `segy2segy.py` executable so it is available anywhere on your system.
 
 ----------
 
