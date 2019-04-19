@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-:copyright: 2016 Geophysics Labs
+:copyright: 2019 Geophysics Labs
 :author: Joseph Barraud
 :license: BSD License
 """
@@ -14,13 +13,16 @@ import numpy as np
 from obspy.io.segy.segy import _read_segy
 
 # import local modules
-import segyio, spatial
+from core.segy_io import loadSHandSTH
+from core.spatial import projectPoints
 
 # coordinate positions in SEGY (lookup dictionary)
-coordKeys = {'source':['source_coordinate_x', 'source_coordinate_y'],
-             'group':['group_coordinate_x', 'group_coordinate_y'],
-             'cdp':['x_coordinate_of_ensemble_position_of_this_trace',
-                    'y_coordinate_of_ensemble_position_of_this_trace']}
+coordKeys = {
+    'source': ['source_coordinate_x', 'source_coordinate_y'],
+    'group': ['group_coordinate_x', 'group_coordinate_y'],
+    'cdp': ['x_coordinate_of_ensemble_position_of_this_trace', 'y_coordinate_of_ensemble_position_of_this_trace']
+}
+
 
 #==============================================================================
 # convertScaler
@@ -49,7 +51,7 @@ def convertScaler(scaler, toRead=True):
     '''
     if np.any(scaler == 0):  # some SEGY files lack a proper definition of the scaler
         XYscale = 1.
-    elif np.any(scaler < 0): # Positive scaler is multiplier, if negative is divisor
+    elif np.any(scaler < 0):  # Positive scaler is multiplier, if negative is divisor
         XYscale = 1 / np.asfarray(np.abs(scaler))  # makes sure the coordinates are turned into floats
     else:
         XYscale = np.asfarray(np.abs(scaler))
@@ -59,6 +61,7 @@ def convertScaler(scaler, toRead=True):
         XYscale = 1 / XYscale
 
     return XYscale
+
 
 #==============================================================================
 # segyXY
@@ -72,30 +75,36 @@ def segyXY(inSEGY, coord='Source', force_scaling=False, scaler=1.):
     Xcoord, Ycoord = coordKeys[coord.lower()]
 
     # open file and read it with obspy module (does not read the data)
-    SH, STH = segyio.loadSHandSTH(inSEGY)
+    SH, STH = loadSHandSTH(inSEGY)
     ntraces = SH['ntraces']
 
     # define output
     XYarray = np.zeros((ntraces, 2), dtype=np.float)
 
     # Retrieve coordinates
-    if not force_scaling: # get scaler from file
-        scaler = STH['scalar_to_be_applied_to_all_coordinates'] # this is a vector with ntraces elements
+    if not force_scaling:  # get scaler from file
+        scaler = STH['scalar_to_be_applied_to_all_coordinates']  # this is a vector with ntraces elements
         XYscale = convertScaler(scaler, toRead=True)
     else:
         XYscale = scaler
 
-    XYarray[:, 0] = STH[Xcoord]*XYscale
-    XYarray[:, 1] = STH[Ycoord]*XYscale
+    XYarray[:, 0] = STH[Xcoord] * XYscale
+    XYarray[:, 1] = STH[Ycoord] * XYscale
 
     return XYarray, XYscale
+
 
 #==============================================================================
 # segy2segy
 #==============================================================================
-def segy2segy(inSEGY, outSEGY, s_srs=23029, t_srs=23030,
-              s_coord='Source', t_coord='CDP',
-              force_scaling=False, scaler=1.):
+def segy2segy(inSEGY,
+              outSEGY,
+              s_srs=23029,
+              t_srs=23030,
+              s_coord='Source',
+              t_coord='CDP',
+              force_scaling=False,
+              scaler=1.):
     '''
     Transform coordinates in SEGY files. This function makes use of the GDAL
     library for processing coordinates and projections.
@@ -132,9 +141,9 @@ def segy2segy(inSEGY, outSEGY, s_srs=23029, t_srs=23030,
     XYarray, XYscale = segyXY(inSEGY, s_coord, force_scaling, scaler)
 
     # transform coordinates
-    newXYarray = spatial.projectPoints(XYarray, s_srs, t_srs)
+    newXYarray = projectPoints(XYarray, s_srs, t_srs)
     # Apply scaling
-    newXYarray = newXYarray/np.column_stack((XYscale, XYscale))
+    newXYarray = newXYarray / np.column_stack((XYscale, XYscale))
 
     # load SEGY object (headers only)
     seis = _read_segy(inSEGY, headonly=True)
@@ -151,60 +160,60 @@ def segy2segy(inSEGY, outSEGY, s_srs=23029, t_srs=23030,
     # write output SEGY with new coordinates
     seis.write(outSEGY)
 
-#==============================================================================
-# Use module as a script (command line)
-#==============================================================================
-if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Reproject SEGY coordinates.')
-    parser.add_argument('input_file',
-                        metavar='Input SEGY file or directory',
-                        type=str,
-                        help='The path to a SEGY file or a directory.')
-    parser.add_argument('-o', '--output',
-                        metavar='Output SEGY file',
-                        type=str,
-                        nargs='?',
-                        help='The path to the output SEGY file.')
-    parser.add_argument('-s_srs',
-                        metavar='source spatial reference set',
-                        type=int,
-                        nargs='?',
-                        default=23029,
-                        help='The spatial reference of the input file.')
-    parser.add_argument('-t_srs',
-                        metavar='target spatial reference set',
-                        type=int,
-                        nargs='?',
-                        default=23030,
-                        help='The spatial reference of the output file.')
-    parser.add_argument('-s_coord',
-                        metavar='Source coordinate position',
-                        type=str,
-                        nargs='?',
-                        default='Source',
-                        help='Position of the coordinates in the input SEGY headers.')
-    parser.add_argument('-t_coord',
-                        metavar='Target coordinate position',
-                        type=str,
-                        nargs='?',
-                        default='CDP',
-                        help='Position of the new coordinates in the output SEGY headers.')
-    parser.add_argument('-fs', '--force_scaling',
-                        action='store_true',
-                        help='If used, the program will use the number defined by the scaler \
-                        argument to scale the coordinates.')
-    parser.add_argument('-sc', '--scaler', metavar='scaler',
-                        type=float,
-                        nargs='?',
-                        default=1.0,
-                        help='Scaling factor applied to coordinates.')
-    parser.add_argument('-s', '--suffix',
-                        metavar='Suffix to output filename',
-                        type=str,
-                        default='',
-                        nargs='?',
-                        help='Suffix to add to the input filename to create the output filename.')
+#==============================================================================
+# main function
+#==============================================================================
+def main():
+
+    parser = argparse.ArgumentParser(
+        description='Reproject SEGY coordinates.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        'input_file', metavar='Input SEGY file or directory', type=str, help='The path to a SEGY file or a directory.')
+    parser.add_argument(
+        '-o',
+        '--output',
+        metavar='Output SEGY file',
+        type=str,
+        help="The path to the output SEGY file. Files can't be overwritten.")
+    parser.add_argument(
+        '-s_srs',
+        metavar='source spatial reference set',
+        type=int,
+        default=23029,
+        help='The spatial reference of the input file defined as a EPSG code.')
+    parser.add_argument(
+        '-t_srs',
+        metavar='target spatial reference set',
+        type=int,
+        default=23030,
+        help='The spatial reference of the output file defined as a EPSG code.')
+    parser.add_argument(
+        '-s_coord',
+        metavar='Source coordinate position',
+        type=str,
+        default='Source',
+        help="Position of coordinates in the input SEGY headers, to choose in ['Source', 'Group', 'CDP'].")
+    parser.add_argument(
+        '-t_coord',
+        metavar='Target coordinate position',
+        type=str,
+        default='CDP',
+        help="Position of the new coordinates in the output SEGY headers, to choose in ['Source', 'Group', 'CDP'].")
+    parser.add_argument(
+        '-fs',
+        '--force_scaling',
+        action='store_true',
+        help='If used, the program will use the number defined by the scaler argument to scale the coordinates.')
+    parser.add_argument(
+        '-sc', '--scaler', metavar='scaler', type=float, default=1.0, help='Scaling factor applied to coordinates.')
+    parser.add_argument(
+        '-s',
+        '--suffix',
+        metavar='Suffix to output filename',
+        type=str,
+        default='',
+        help='Suffix to add to the input filename to create the output filename.')
 
     args = parser.parse_args()
     infile = args.input_file
@@ -213,19 +222,17 @@ if __name__ == "__main__":
     if os.path.isfile(infile):
         print("Processing file: {}".format(os.path.basename(infile)))
         if args.output:
-            segy2segy(infile, args.output, args.s_srs, args.t_srs,
-                      args.s_coord, args.t_coord,
-                      args.force_scaling, args.scaler)
+            segy2segy(infile, args.output, args.s_srs, args.t_srs, args.s_coord, args.t_coord, args.force_scaling,
+                      args.scaler)
             print("SEGY coordinates successfully projected.")
         elif args.suffix != '':
             segyName, extension = os.path.splitext(infile)
             outfile = segyName + args.suffix + extension
-            segy2segy(infile, outfile, args.s_srs, args.t_srs,
-                      args.s_coord, args.t_coord,
-                      args.force_scaling, args.scaler)
+            segy2segy(infile, outfile, args.s_srs, args.t_srs, args.s_coord, args.t_coord, args.force_scaling,
+                      args.scaler)
             print("SEGY coordinates successfully projected.")
         else:
-            print("Error: output file name or suffix not provided.") # file cannot be overwritten
+            print("Error: output file name or suffix not provided.")  # file cannot be overwritten
 
     elif os.path.isdir(infile):
         if args.suffix != '':
@@ -236,12 +243,15 @@ if __name__ == "__main__":
                     target = os.path.join(infile, f)
                     segyName, extension = os.path.splitext(f)
                     outfile = os.path.join(infile, segyName + args.suffix + extension)
-                    segy2segy(target, outfile, args.s_srs, args.t_srs,
-                              args.s_coord, args.t_coord,
-                              args.force_scaling, args.scaler)
+                    segy2segy(target, outfile, args.s_srs, args.t_srs, args.s_coord, args.t_coord, args.force_scaling,
+                              args.scaler)
                     print("Done!")
             print("\nAll SEGY files successfully processed.")
         else:
-            print("Error: Please provide a suffix for output files (option -s).") # files cannot be overwritten
+            print("Error: Please provide a suffix for output files (option -s).")  # files cannot be overwritten
     else:
         print("Error: input is not a file or directory.")
+
+
+if __name__ == "__main__":
+    main()

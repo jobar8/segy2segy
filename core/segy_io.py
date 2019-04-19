@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Functions to read and write SEGY files with the help of the ObsPy library.
 These functions are essentially interfaces to the obspy.io.segy.segy sub-module.
 
-:copyright: 2016 Geophysics Labs
+:copyright: 2019 Geophysics Labs
 :author: Joseph Barraud
 :license: BSD License
 """
@@ -28,6 +27,7 @@ STH_keys = [u'trace_sequence_number_within_line',
             u'y_coordinate_of_ensemble_position_of_this_trace',
             u'for_3d_poststack_data_this_field_is_for_in_line_number',
             u'for_3d_poststack_data_this_field_is_for_cross_line_number']
+
 
 #==============================================================================
 # loadSEGYHeader
@@ -66,6 +66,7 @@ def loadSEGYHeader(seis, keys=None):
 
     return SH
 
+
 #===============================================================================
 # loadSEGYTraceHeader
 #===============================================================================
@@ -102,6 +103,7 @@ def loadSEGYTraceHeader(traces, keys=None):
 
     return STH
 
+
 #===============================================================================
 # loadSEGY
 #===============================================================================
@@ -126,7 +128,7 @@ def loadSEGY(filename, endian=None):
     SH['filename'] = filename
     SH["ntraces"] = ntraces
     SH["ns"] = SH['number_of_samples_per_data_trace']
-    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000 # in milliseconds
+    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000  # in milliseconds
 
     # Load all the Trace headers in arrays
     STH = loadSEGYTraceHeader(traces)
@@ -135,6 +137,7 @@ def loadSEGY(filename, endian=None):
     data = np.vstack([t.data for t in traces]).T
 
     return data, SH, STH
+
 
 #===============================================================================
 # loadSHandSTH
@@ -159,12 +162,13 @@ def loadSHandSTH(filename, endian=None):
     SH['filename'] = filename
     SH["ntraces"] = ntraces
     SH["ns"] = SH['number_of_samples_per_data_trace']
-    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000 # in milliseconds
+    SH["dt"] = SH['sample_interval_in_microseconds'] / 1000  # in milliseconds
 
     # Load all the Trace headers in arrays
     STH = loadSEGYTraceHeader(traces)
 
     return SH, STH
+
 
 #===============================================================================
 # writeSTH
